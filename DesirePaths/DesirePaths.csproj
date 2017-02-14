@@ -35,6 +35,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>References\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="HugsLib">
+      <HintPath>References\HugsLib.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -47,14 +50,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DesirePaths.cs" />
-    <Compile Include="Detour.cs" />
-    <Compile Include="DetourInjector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="About.xml">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="Version.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

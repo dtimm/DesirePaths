@@ -238,7 +238,4 @@ ModelManifest.xml
 # Paket dependency manager
 .paket/paket.exe
 
-# FAKE - F# Make
-.fake/
-/DesirePaths/References/Assembly-CSharp.dll
-/DesirePaths/References/UnityEngine.dll
+*.dll
