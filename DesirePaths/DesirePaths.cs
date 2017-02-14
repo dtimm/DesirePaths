@@ -211,6 +211,10 @@ namespace DesirePaths
                     fTest = new IntVec3(fLoc.x + 1, 0, fLoc.z + 1);
                     tTerrAdj = fTest.GetTerrain(pMap);
                     rDryChance += getDryAdjMod(tTerrAdj);
+                    
+                    //Max dry chance of 25% per check.
+                    if (rDryChance > 0.25f)
+                        rDryChance = 0.25f;
 
                     // Potentially dry it out.
                     if (UnityEngine.Random.Range(0f, 1f) < rDryChance)
