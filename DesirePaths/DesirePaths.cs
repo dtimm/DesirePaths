@@ -32,11 +32,9 @@ namespace DesirePaths
             s_tWater = GenDefDatabase.GetDef(typeof(TerrainDef), "WaterShallow", false) as TerrainDef;
             s_tMarsh = GenDefDatabase.GetDef(typeof(TerrainDef), "Marsh", false) as TerrainDef;
 
-#if DEBUG
             Logger.Message($"Loaded Mud Def: {s_tMud?.defName ?? "FAILED!"}");
             Logger.Message($"Loaded Water Def: {s_tWater?.defName ?? "FAILED!"}");
             Logger.Message($"Loaded Marsh Def: {s_tMarsh?.defName ?? "FAILED!"}");
-#endif
         }
 
         public override void Tick(int currentTick)
@@ -50,19 +48,23 @@ namespace DesirePaths
             {
                 // every 10 ticks run trample pass.
                 if (currentTick % 10 == 0)
+                {
                     foreach (Pawn pPawn in pMap.mapPawns.AllPawns)
                         Trample(pPawn);
+                }
 
                 // Every 250 ticks, run wet/dry pass.
                 if (currentTick % 250 == 0)
+                {
                     DoRareThings(pMap);
+                }
             }
         }
 
         public void Trample(Pawn pPawn)
         {
             // Only check while moving.
-            if (!(pPawn.pather?.Moving ?? false))
+            if (!(pPawn?.pather?.Moving ?? false))
                 return;
 
             var fLoc = pPawn.Position;
@@ -110,7 +112,7 @@ namespace DesirePaths
                         rCrapChance += 0.003f;
 
                     // If the pawn is unroofed and it is raining.
-                    if (!fLoc.Roofed(pPawn.Map))
+                    if (!fLoc.Roofed(pPawn.Map) && s_wCurrentWeather != null)
                         rCrapChance += 0.002f * s_wCurrentWeather.rainRate;
 
                     // Multiply by terrain type.
