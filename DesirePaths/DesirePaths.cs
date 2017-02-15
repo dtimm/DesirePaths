@@ -29,27 +29,34 @@ namespace DesirePaths
             base.Initialize();
 
             s_tMud = GenDefDatabase.GetDef(typeof(TerrainDef), "Mud", false) as TerrainDef;
-            s_tWater = GenDefDatabase.GetDef(typeof(TerrainDef), "Shallow Water", false) as TerrainDef;
+            s_tWater = GenDefDatabase.GetDef(typeof(TerrainDef), "WaterShallow", false) as TerrainDef;
             s_tMarsh = GenDefDatabase.GetDef(typeof(TerrainDef), "Marsh", false) as TerrainDef;
+
+#if DEBUG
+            Logger.Message($"Loaded Mud Def: {s_tMud?.defName ?? "FAILED!"}");
+            Logger.Message($"Loaded Water Def: {s_tWater?.defName ?? "FAILED!"}");
+            Logger.Message($"Loaded Marsh Def: {s_tMarsh?.defName ?? "FAILED!"}");
+#endif
         }
 
         public override void Tick(int currentTick)
         {
-            base.Tick(currentTick);
+            //base.Tick(currentTick);
 
-            var pGame = Current.Game;
-            var pMap = pGame?.Maps?.First();
-            if (pMap == null)
+            if (Current.Game?.Maps?.First() == null)
                 return;
 
-            // every 10 ticks run trample pass.
-            if (currentTick % 10 == 0)
-                foreach (Pawn pPawn in pMap.mapPawns.AllPawns)
-                    Trample(pPawn);
+            foreach (Map pMap in Current.Game.Maps)
+            {
+                // every 10 ticks run trample pass.
+                if (currentTick % 10 == 0)
+                    foreach (Pawn pPawn in pMap.mapPawns.AllPawns)
+                        Trample(pPawn);
 
-            // Every 250 ticks, run wet/dry pass.
-            if (currentTick % 250 == 0)
-                DoRareThings(pMap);
+                // Every 250 ticks, run wet/dry pass.
+                if (currentTick % 250 == 0)
+                    DoRareThings(pMap);
+            }
         }
 
         public void Trample(Pawn pPawn)
@@ -64,9 +71,6 @@ namespace DesirePaths
             if (pPawn.Map == null)
                 return;
 
-#if DEBUG
-            string sStamp = $"{GenTicks.TicksAbs} {pPawn.Name}";
-#endif
             // Get previous cell via reflection.
             var fLast = (IntVec3) ppf_last.GetValue(pPawn.pather);
 
@@ -84,7 +88,7 @@ namespace DesirePaths
                 if (pPlant.HitPoints <= 0)
                 {
 #if DEBUG
-                    Logger.Message($"{sStamp}\t{pPlant.ToString()} HP: {pPlant.HitPoints}");
+                    Logger.Message($"plant trampled by {pPawn}");
 #endif
                     pPlant.Destroy(DestroyMode.Kill);
                 }
@@ -109,10 +113,13 @@ namespace DesirePaths
                     if (!fLoc.Roofed(pPawn.Map))
                         rCrapChance += 0.002f * s_wCurrentWeather.rainRate;
 
+                    // Multiply by terrain type.
+                    rCrapChance *= getWetMod(tTerr);
+
                     if (UnityEngine.Random.Range(0f, 1f) < rCrapChance)
                     {
 #if DEBUG
-                        Logger.Message($"{fLoc} {tTerr} converted to {s_tMud}");
+                        Logger.Message($"trampled {tTerr.defName} to {s_tMud.defName}");
 #endif
                         pPawn.Map.terrainGrid.SetTerrain(fLoc, s_tMud);
                     }
@@ -126,7 +133,7 @@ namespace DesirePaths
                 if (rDepth < 0.0f)
                     rDepth = 0.0f;
 #if DEBUG
-                Logger.Message($"{sStamp}\tSnow: {rDepth}");
+                Logger.Message($"Snow: {rDepth}");
 #endif
                 pPawn.Map.snowGrid.SetDepth(fLoc, rDepth);
             }
@@ -195,9 +202,13 @@ namespace DesirePaths
                     var tDries = tTerr.driesTo;
                     if (isWater(tTerr))
                     {
-                        tDries = s_tMud;
+                        // Lower change of drying water to marsh.
+                        tDries = s_tMarsh;
                         rDryChance *= 0.25f;
                     }
+                    // Marsh dries into mud.
+                    else if (isMarsh(tTerr))
+                        tDries = s_tMud;
 
                     // Potentially dry it out.
                     if (UnityEngine.Random.Range(0f, 1f) < rDryChance)
@@ -256,9 +267,11 @@ namespace DesirePaths
                     // Modifier for type.
                     rWetChance *= getWetMod(tTerr);
 
-                    // Lesser chance of mud/marsh becoming water.
+                    // Mud becomes marsh, marsh becomes water.
                     TerrainDef tWet = s_tMud;
-                    if (isMudMarsh(tTerr))
+                    if (isMud(tTerr))
+                        tWet = s_tMarsh;
+                    else if (isMarsh(tTerr))
                         tWet = s_tWater;
 
                     // Potentially de-dry it out.
@@ -278,7 +291,7 @@ namespace DesirePaths
             if (isMudMarsh(tTerrAdj))
                 return 0.001f;
             else if (isWater(tTerrAdj))
-                return 0.003f;
+                return 0.005f;
 
             return 0f;
         }
@@ -329,6 +342,18 @@ namespace DesirePaths
             string sLower = tTerr.defName.ToLower();
             return  sLower.Contains("mud")   ||
                     sLower.Contains("marsh") ;
+        }
+
+        private static bool isMud(TerrainDef tTerr)
+        {
+            string sLower = tTerr.defName.ToLower();
+            return sLower.Contains("mud");
+        }
+
+        private static bool isMarsh(TerrainDef tTerr)
+        {
+            string sLower = tTerr.defName.ToLower();
+            return sLower.Contains("marsh");
         }
 
         private static bool isWater(TerrainDef tTerr)
