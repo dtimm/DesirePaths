@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-	<name>Desire paths</name>
+	<name>Desire Paths</name>
 	<author>David Timm</author>
 	<targetVersion>0.16.1385</targetVersion>
-	<description>Trample snow and grass by walking on it a lot.</description>
+	<description>Trample snow and kill grass by walking on it. Create and expand mud patches in heavy rain, and dry them up when it is hot and clear.</description>
 </ModMetaData>
