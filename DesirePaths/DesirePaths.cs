@@ -29,8 +29,8 @@ namespace DesirePaths
             base.Initialize();
 
             s_tMud = GenDefDatabase.GetDef(typeof(TerrainDef), "Mud", false) as TerrainDef;
-            s_tWater = GenDefDatabase.GetDef(typeof(TerrainDef), "WaterShallow", false) as TerrainDef;
-            s_tMarsh = GenDefDatabase.GetDef(typeof(TerrainDef), "Marsh", false) as TerrainDef;
+            //s_tWater = GenDefDatabase.GetDef(typeof(TerrainDef), "WaterShallow", false) as TerrainDef;
+            //s_tMarsh = GenDefDatabase.GetDef(typeof(TerrainDef), "Marsh", false) as TerrainDef;
 
             Logger.Message($"Loaded Mud Def: {s_tMud?.defName ?? "FAILED!"}");
             Logger.Message($"Loaded Water Def: {s_tWater?.defName ?? "FAILED!"}");
@@ -154,7 +154,7 @@ namespace DesirePaths
                     continue;
 
                 float rTemp = fLoc.GetTemperature(pMap);
-                if (s_wCurrentWeather.rainRate <= 0f && rTemp > 20f && tTerr.driesTo != null)
+                if (s_wCurrentWeather.rainRate <= 0f && rTemp > 20f && isMud(tTerr))
                 {
                     if (!fLoc.Roofed(pMap) && s_wCurrentWeather.rainRate > 0.0f)
                         continue;
@@ -202,15 +202,15 @@ namespace DesirePaths
                         rDryChance = 0.10f;
 
                     var tDries = tTerr.driesTo;
-                    if (isWater(tTerr))
-                    {
-                        // Lower change of drying water to marsh.
-                        tDries = s_tMarsh;
-                        rDryChance *= 0.25f;
-                    }
-                    // Marsh dries into mud.
-                    else if (isMarsh(tTerr))
-                        tDries = s_tMud;
+                  //if (isWater(tTerr))
+                  //{
+                  //    // Lower change of drying water to marsh.
+                  //    tDries = s_tMarsh;
+                  //    rDryChance *= 0.25f;
+                  //}
+                  //// Marsh dries into mud.
+                  //else if (isMarsh(tTerr))
+                  //    tDries = s_tMud;
 
                     // Potentially dry it out.
                     if (UnityEngine.Random.Range(0f, 1f) < rDryChance)
@@ -221,7 +221,7 @@ namespace DesirePaths
                         pMap.terrainGrid.SetTerrain(fLoc, tDries);
                     }
                 }
-                else if (s_wCurrentWeather.rainRate > 0f && (canWet(tTerr) || isMudMarsh(tTerr)))
+                else if (s_wCurrentWeather.rainRate > 0f && canWet(tTerr))
                 {
                     // Rain doesn't fall through roofs.
                     if (fLoc.Roofed(pMap))
@@ -271,10 +271,10 @@ namespace DesirePaths
 
                     // Mud becomes marsh, marsh becomes water.
                     TerrainDef tWet = s_tMud;
-                    if (isMud(tTerr))
-                        tWet = s_tMarsh;
-                    else if (isMarsh(tTerr))
-                        tWet = s_tWater;
+                  //if (isMud(tTerr))
+                  //    tWet = s_tMarsh;
+                  //else if (isMarsh(tTerr))
+                  //    tWet = s_tWater;
 
                     // Potentially de-dry it out.
                     if (UnityEngine.Random.Range(0f, 1f) < rWetChance)
