@@ -10,11 +10,14 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using HugsLib;
+using HugsLib.Settings;
 
 namespace DesirePaths
 {
     public class DesirePaths : ModBase
     {
+        private SettingHandle<bool> killPlants;
+
         public override string ModIdentifier
         {
             get { return "DesirePaths"; }
@@ -23,6 +26,7 @@ namespace DesirePaths
         public override void Initialize()
         {
             base.Initialize();
+            killPlants = Settings.GetHandle<bool>("killPlants", "Trample Plants", "Pawn will kill plants by walking over them repeatedly.", true);
         }
 
         public override void Tick(int currentTick)
@@ -32,40 +36,55 @@ namespace DesirePaths
             if (Current.Game?.Maps?.First() == null)
                 return;
 
-            foreach (Map pMap in Current.Game.Maps)
+            foreach (Map map in Current.Game.Maps)
             {
                 // every 10 ticks run trample pass.
                 if (currentTick % 10 == 0)
                 {
-                    foreach (Pawn pPawn in pMap.mapPawns.AllPawns)
+                    foreach (Pawn pPawn in map.mapPawns.AllPawns)
                         Trample(pPawn);
                 }
             }
         }
 
-        public void Trample(Pawn pPawn)
+        public void Trample(Pawn pawn)
         {
             // Only check while moving.
-            if (!(pPawn?.pather?.Moving ?? false))
+            if (!(pawn?.pather?.Moving ?? false))
                 return;
 
-            var fLoc = pPawn.Position;
+            var fLoc = pawn.Position;
 
             // Some Pawns have a null map on each Tick()...? Kick them out.
-            if (pPawn.Map == null)
+            if (pawn.Map == null)
                 return;
 
+            if (killPlants)
+                foreach (var plant in pawn.Map.thingGrid.ThingsAt(fLoc).OfType<Plant>())
+                {
+                    // Damage plants and kill them if needed.
+                    // Anything smaller than a human doesn't damage grass.
+                    int damage = (int) pawn.BodySize;
+                    plant.HitPoints -= damage;
 
-            float rDepth = fLoc.GetSnowDepth(pPawn.Map);
-            if (rDepth > 0f)
-            {
-                rDepth -= 0.01f * pPawn.BodySize;
-                if (rDepth < 0.0f)
-                    rDepth = 0.0f;
 #if DEBUG
-                Logger.Message($"Snow: {rDepth}");
+                    Logger.Message($"plant trampled by {pawn} : {plant.HitPoints}");
 #endif
-                pPawn.Map.snowGrid.SetDepth(fLoc, rDepth);
+
+                    if (plant.HitPoints <= 0)
+                        plant.Destroy(DestroyMode.Kill);
+                }
+
+            float depth = fLoc.GetSnowDepth(pawn.Map);
+            if (depth > 0f)
+            {
+                depth -= 0.01f * pawn.BodySize;
+                if (depth < 0.0f)
+                    depth = 0.0f;
+#if DEBUG
+                Logger.Message($"snow trampled by {pawn} : {depth}");
+#endif
+                pawn.Map.snowGrid.SetDepth(fLoc, depth);
             }
         }
     }
