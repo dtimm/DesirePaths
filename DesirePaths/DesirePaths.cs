@@ -72,7 +72,7 @@ namespace DesirePaths
 #endif
 
                     if (plant.HitPoints <= 0)
-                        plant.Destroy(DestroyMode.Kill);
+                        plant.Destroy(DestroyMode.KillFinalize);
                 }
 
             float depth = fLoc.GetSnowDepth(pawn.Map);
